@@ -1,0 +1,12 @@
+{
+  "starter_town": [
+    "merchant",
+    "guard",
+    "gossip"
+  ],
+  "capital": [
+    "merchant",
+    "guard",
+    "chronicler"
+  ]
+}
