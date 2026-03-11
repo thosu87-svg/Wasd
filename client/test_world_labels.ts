@@ -1,5 +1,11 @@
 import { JSDOM } from 'jsdom';
 import * as THREE from 'three';
+import * as fs from 'fs';
+
+let logLines: string[] = [];
+function log(msg: string) { logLines.push(msg); }
+
+//console.log('test script starting');
 
 // provide fake requestAnimationFrame for node environment
 (global as any).requestAnimationFrame = (cb: any) => setTimeout(cb, 0);
@@ -17,11 +23,13 @@ const dom = new JSDOM(`<!DOCTYPE html><body></body>`);
 
 function logLabels() {
   // also show tooltip element if present
+  const labels = Array.from(document.querySelectorAll('[id^="label-"]')).map(el => ({id: el.id, html: el.innerHTML}));
+  console.log('world labels:', labels);
 }
 
 function logTooltip() {
   const t = document.getElementById('interaction-tooltip');
-  console.log('tooltip text:', t ? t.textContent : '<none>');
+  log('tooltip text: ' + (t ? t.textContent : '<none>'));
 }
   const labels = Array.from(document.querySelectorAll('[id^="label-"]')).map(el => ({id: el.id, html: el.innerHTML}));
   console.log('world labels:', labels);
