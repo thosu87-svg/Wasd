@@ -24,15 +24,12 @@ const dom = new JSDOM(`<!DOCTYPE html><body></body>`);
 function logLabels() {
   // also show tooltip element if present
   const labels = Array.from(document.querySelectorAll('[id^="label-"]')).map(el => ({id: el.id, html: el.innerHTML}));
-  console.log('world labels:', labels);
+  log('world labels: ' + JSON.stringify(labels));
 }
 
 function logTooltip() {
   const t = document.getElementById('interaction-tooltip');
   log('tooltip text: ' + (t ? t.textContent : '<none>'));
-}
-  const labels = Array.from(document.querySelectorAll('[id^="label-"]')).map(el => ({id: el.id, html: el.innerHTML}));
-  console.log('world labels:', labels);
 }
 
 async function runTest() {
@@ -73,4 +70,9 @@ async function runTest() {
   logTooltip();
 }
 
-runTest().catch(console.error);
+runTest().then(() => {
+  fs.writeFileSync('test_output.txt', logLines.join('\n'));
+}).catch(err => {
+  log('ERROR: ' + err);
+  fs.writeFileSync('test_output.txt', logLines.join('\n') + '\n' + err);
+});
