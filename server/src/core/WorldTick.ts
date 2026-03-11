@@ -197,10 +197,8 @@ export class WorldTick {
           if (dist < 20) {
             const interaction = this.npcSystem.handleInteraction(
               targetId, 
-              charName, 
-              player.quests || [],
-              this.questSystem.getQuestDefinitions(),
-              player.flags || {}
+              player,
+              this.questSystem.getQuestDefinitions()
             );
             if (interaction) {
               this.ws.sendToPlayer(id, {
@@ -266,8 +264,8 @@ export class WorldTick {
           }
         }
       } else if (msg.type === "dialogue_choice") {
-        const { npcId, nodeId } = msg;
-        const interaction = this.npcSystem.handleChoice(npcId, nodeId, player);
+        const { npcId, nodeId, choiceId } = msg;
+        const interaction = this.npcSystem.handleChoice(npcId, nodeId, choiceId, player);
         if (interaction) {
           this.ws.sendToPlayer(id, {
             type: "dialogue",
@@ -423,7 +421,7 @@ export class WorldTick {
       type: "world_tick",
       tick: this.tickCount,
       activeChunkIds: activeChunks.map(c => c.id),
-      players: players,
+      players: players.map(p => ({ ...p, questStatus: this.questSystem.getQuestStatus(p) })),
       npcs: this.npcSystem.getAllNPCs()
     });
 

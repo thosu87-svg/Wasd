@@ -8,7 +8,8 @@
       { "npcId": "npc_3", "x": 100, "y": 100 },
       { "npcId": "npc_4", "x": 150, "y": 150 },
       { "npcId": "npc_5", "x": 200, "y": 200 },
-      { "npcId": "npc_wolf", "x": 250, "y": 250 }
+      { "npcId": "npc_wolf", "x": 250, "y": 250 },
+      { "npcId": "npc_6_hermit", "x": 300, "y": 300 }
     ]
   }
 ]

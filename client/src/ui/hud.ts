@@ -25,6 +25,9 @@ export function renderHUD() {
     <div id="hud-inventory" style="font-size: 0.8em; color: #ffcc00;">
       Inv: Empty
     </div>
+    <div id="hud-reputation" style="font-size: 0.8em; color: #ff99ff;">
+      Rep: None
+    </div>
     <div id="hud-equipment" style="font-size: 0.8em; color: #00ccff;">
       Equip: None
     </div>
@@ -44,7 +47,7 @@ export function renderHUD() {
   document.body.appendChild(hud);
 }
 
-export function updateHUD(data: { gold: number, xp: number, quests: any[], inventory: any[], equipment?: any }) {
+export function updateHUD(data: { gold: number, xp: number, quests: any[], inventory: any[], equipment?: any, reputation?: any, questStatus?: any[] }) {
   const stats = document.getElementById("hud-stats");
   if (stats) {
     stats.textContent = `Gold: ${data.gold} | XP: ${data.xp}`;
@@ -56,16 +59,25 @@ export function updateHUD(data: { gold: number, xp: number, quests: any[], inven
     inv.textContent = items ? `Inv: ${items}` : "Inv: Empty";
   }
 
+  const rep = document.getElementById("hud-reputation");
+  if (rep) {
+    const repStr = data.reputation ? Object.entries(data.reputation).map(([k, v]) => `${k}: ${v}`).join(", ") : "None";
+    rep.textContent = `Rep: ${repStr}`;
+  }
+
   const equip = document.getElementById("hud-equipment");
   if (equip && data.equipment) {
     const weapon = data.equipment.weapon ? data.equipment.weapon.name : "None";
     equip.textContent = `Weapon: ${weapon}`;
   }
   
-  const quests = document.getElementById("hud-quests");
-  if (quests) {
-    const activeQuest = data.quests.find(q => !q.completed);
-    quests.textContent = activeQuest ? `Active Quest: ${activeQuest.name}` : "Active Quest: None";
+  const questContainer = document.getElementById("hud-quests");
+  if (questContainer && data.questStatus) {
+    questContainer.innerHTML = `<strong>Quests:</strong><br/>` + data.questStatus.map((q: any) => 
+      `<div style="color: ${q.state === 'active' ? '#00ff00' : q.state === 'completed' ? '#aaa' : q.state === 'available' ? '#ffff00' : '#ff4444'}">
+        ${q.title} [${q.state}]
+      </div>`
+    ).join("");
   }
 }
 
@@ -135,6 +147,7 @@ export function showDialogue(source: string, text: string, choices: any[] = [], 
           class="dialogue-choice-btn" 
           data-npc-id="${npcId}" 
           data-node-id="${choice.nextNodeId}"
+          data-choice-id="${choice.id}"
           style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; text-align: left; transition: all 0.2s;"
           onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.borderColor='#00ff00';"
           onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.2)';"
@@ -157,8 +170,9 @@ export function showDialogue(source: string, text: string, choices: any[] = [], 
       const target = e.currentTarget as HTMLButtonElement;
       const nid = target.getAttribute("data-npc-id");
       const node = target.getAttribute("data-node-id");
-      if (nid && node) {
-        sendDialogueChoice(nid, node);
+      const choiceId = target.getAttribute("data-choice-id");
+      if (nid && node && choiceId) {
+        sendDialogueChoice(nid, node, choiceId);
       }
     });
   });

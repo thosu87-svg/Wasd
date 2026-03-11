@@ -60,5 +60,13 @@
       "health": 50,
       "maxHealth": 50
     }
+  },
+  {
+    "id": "npc_6_hermit",
+    "name": "Hermit",
+    "role": "Quest Giver",
+    "dialogueId": "dialogue_npc_6",
+    "questHooks": ["hermit_quest"],
+    "faction": "Neutral"
   }
 ]

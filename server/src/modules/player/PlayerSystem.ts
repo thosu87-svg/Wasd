@@ -21,7 +21,9 @@ export class PlayerSystem {
       faction: null,
       civilization: null,
       matrixEnergy: 0,
-      flags: {}
+      flags: {},
+      reputation: {},
+      usedChoices: []
     };
     this.players.set(id, player);
     return player;

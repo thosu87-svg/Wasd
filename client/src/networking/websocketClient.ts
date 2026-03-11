@@ -16,12 +16,13 @@ const CD_DURATIONS = {
   equip: 500
 };
 
-export function sendDialogueChoice(npcId: string, nodeId: string) {
+export function sendDialogueChoice(npcId: string, nodeId: string, choiceId: string) {
   if (globalWs && globalWs.readyState === WebSocket.OPEN) {
     globalWs.send(JSON.stringify({
       type: "dialogue_choice",
       npcId,
-      nodeId
+      nodeId,
+      choiceId
     }));
   }
 }
@@ -71,7 +72,9 @@ export function connectSocket() {
               xp: myPlayer.xp || 0,
               quests: myPlayer.quests || [],
               inventory: myPlayer.inventory || [],
-              equipment: myPlayer.equipment
+              equipment: myPlayer.equipment,
+              reputation: myPlayer.reputation,
+              questStatus: myPlayer.questStatus
             });
           }
         }

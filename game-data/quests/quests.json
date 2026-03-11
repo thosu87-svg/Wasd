@@ -100,5 +100,32 @@
       "gold": 500,
       "xp": 1000
     }
+  },
+  {
+    "id": "blacksmith_master",
+    "title": "Blacksmith Master",
+    "giverNpcId": "npc_4",
+    "targetNpcId": "npc_4",
+    "objectiveType": "talk_to",
+    "requiredReputation": {
+      "blacksmith_guild": { "min": 10 }
+    },
+    "reward": {
+      "gold": 1000,
+      "xp": 2000
+    }
+  },
+  {
+    "id": "hermit_quest",
+    "title": "Hermit's Herbs",
+    "giverNpcId": "npc_6_hermit",
+    "targetNpcId": "npc_6_hermit",
+    "objectiveType": "collect",
+    "requiredItemId": "rare_herb",
+    "requiredCount": 3,
+    "reward": {
+      "gold": 100,
+      "xp": 200
+    }
   }
 ]

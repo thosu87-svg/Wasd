@@ -64,9 +64,13 @@ export class NPCSystem {
     return this.npcs.get(id);
   }
 
-  handleInteraction(npcId: string, charName: string, playerQuests: any[] = [], questDefinitions: Map<string, any> = new Map(), playerFlags: any = {}) {
+  handleInteraction(npcId: string, player: any, questDefinitions: Map<string, any> = new Map()) {
     const npc = this.npcs.get(npcId);
     if (!npc) return null;
+    
+    const playerQuests = player.quests || [];
+    const playerFlags = player.flags || {};
+    const playerReputation = player.reputation || {};
 
     const dialogue = this.dialogues.get(npc.dialogueId);
     if (!dialogue) {
@@ -86,13 +90,13 @@ export class NPCSystem {
     // Check for quest-specific dialogue (Old Logic)
     if (npc.questHooks && npc.questHooks.length > 0) {
       for (const qId of npc.questHooks) {
-        const playerQuest = playerQuests.find(q => q.id === qId);
+        const playerQuest = playerQuests.find((q: any) => q.id === qId);
         if (!playerQuest) {
           const questDef = questDefinitions.get(qId);
           let prereqsMet = true;
           if (questDef && questDef.prerequisiteQuestIds) {
             for (const preId of questDef.prerequisiteQuestIds) {
-              const preQuest = playerQuests.find(q => q.id === preId);
+              const preQuest = playerQuests.find((q: any) => q.id === preId);
               if (!preQuest || !preQuest.completed) {
                 prereqsMet = false;
                 break;
@@ -139,10 +143,15 @@ export class NPCSystem {
           let match = true;
           if (entry.conditionFlag && !playerFlags[entry.conditionFlag]) match = false;
           if (entry.conditionQuestId) {
-            const q = playerQuests.find(pq => pq.id === entry.conditionQuestId);
+            const q = playerQuests.find((pq: any) => pq.id === entry.conditionQuestId);
             if (entry.conditionQuestState === "completed" && (!q || !q.completed)) match = false;
             if (entry.conditionQuestState === "active" && (!q || q.completed)) match = false;
             if (entry.conditionQuestState === "not_started" && q) match = false;
+          }
+          if (entry.conditionReputation) {
+            const rep = playerReputation[entry.conditionReputation.factionId] || 0;
+            if (entry.conditionReputation.min !== undefined && rep < entry.conditionReputation.min) match = false;
+            if (entry.conditionReputation.max !== undefined && rep > entry.conditionReputation.max) match = false;
           }
           if (match) {
             activeNodeId = entry.nodeId;
@@ -156,6 +165,11 @@ export class NPCSystem {
         text = node.text;
         choices = (node.choices || []).filter((c: any) => {
           if (c.conditionFlag && !playerFlags[c.conditionFlag]) return false;
+          if (c.conditionReputation) {
+            const rep = playerReputation[c.conditionReputation.factionId] || 0;
+            if (c.conditionReputation.min !== undefined && rep < c.conditionReputation.min) return false;
+            if (c.conditionReputation.max !== undefined && rep > c.conditionReputation.max) return false;
+          }
           return true;
         });
       }
@@ -170,7 +184,7 @@ export class NPCSystem {
     };
   }
 
-  handleChoice(npcId: string, nodeId: string, player: any) {
+  handleChoice(npcId: string, nodeId: string, choiceId: string, player: any) {
     const npc = this.npcs.get(npcId);
     if (!npc) return null;
 
@@ -180,15 +194,38 @@ export class NPCSystem {
     const node = dialogue.nodes[nodeId];
     if (!node) return null;
 
-    // Apply effects of the choice
-    if (node.setFlag) {
-      player.flags[node.setFlag] = true;
+    const choice = (node.choices || []).find((c: any) => c.id === choiceId);
+    if (!choice) return null;
+
+    // Check if choice is already used (if it changes reputation)
+    if (choice.changeReputation) {
+      if (!player.usedChoices) player.usedChoices = [];
+      if (player.usedChoices.includes(choiceId)) return null; // Already used
+      player.usedChoices.push(choiceId);
     }
 
-    let questId = node.triggerQuestId || null;
-    let text = node.text;
-    let choices = (node.choices || []).filter((c: any) => {
+    // Apply effects of the choice
+    if (choice.setFlag) {
+      player.flags[choice.setFlag] = true;
+    }
+    if (choice.changeReputation) {
+      if (!player.reputation) player.reputation = {};
+      const { factionId, amount } = choice.changeReputation;
+      player.reputation[factionId] = (player.reputation[factionId] || 0) + amount;
+    }
+
+    const nextNode = dialogue.nodes[choice.nextNodeId];
+    if (!nextNode) return null;
+
+    let questId = nextNode.triggerQuestId || null;
+    let text = nextNode.text;
+    let choices = (nextNode.choices || []).filter((c: any) => {
       if (c.conditionFlag && !player.flags[c.conditionFlag]) return false;
+      if (c.conditionReputation) {
+        const rep = (player.reputation && player.reputation[c.conditionReputation.factionId]) || 0;
+        if (c.conditionReputation.min !== undefined && rep < c.conditionReputation.min) return false;
+        if (c.conditionReputation.max !== undefined && rep > c.conditionReputation.max) return false;
+      }
       return true;
     });
 
