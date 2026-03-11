@@ -1,13 +1,9 @@
 import { JSDOM } from 'jsdom';
 import * as THREE from 'three';
 
-// stub WebGLRenderer to avoid needing real GL context
-class DummyRenderer {
-  constructor(opts: any) {}
-  setSize(w: number, h: number) {}
-  render(scene: any, camera: any) {}
-}
-(THREE as any).WebGLRenderer = DummyRenderer;
+// provide fake requestAnimationFrame for node environment
+(global as any).requestAnimationFrame = (cb: any) => setTimeout(cb, 0);
+
 // stub camera global used by renderer.ts
 (global as any).camera = new THREE.PerspectiveCamera();
 
@@ -29,10 +25,8 @@ async function runTest() {
   const canvas = {
     width: 800,
     height: 600,
-    addEventListener: () => {},
-    removeEventListener: () => {},
+    // no addEventListener so renderer.ts will use DummyRenderer
     getContext: () => ({
-      // minimal stub for getContext calls
       canvas: {}
     })
   } as any as HTMLCanvasElement;
