@@ -17,7 +17,17 @@ function logLabels() {
 }
 
 async function runTest() {
-  const canvas = { width: 800, height: 600 } as any as HTMLCanvasElement;
+  // three.js WebGLRenderer expects a canvas with addEventListener and getContext
+  const canvas = {
+    width: 800,
+    height: 600,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    getContext: () => ({
+      // minimal stub for getContext calls
+      canvas: {}
+    })
+  } as any as HTMLCanvasElement;
   initRenderer(canvas, 'player1');
   const state = {
     players: [{ id: 'player1', position: { x: 0, y: 0 } }],
