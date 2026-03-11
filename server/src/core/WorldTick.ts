@@ -30,6 +30,7 @@ export class WorldTick {
   public questSystem: QuestEngine;
   public worldSystem: WorldSystem;
   public persistence: PersistenceManager;
+  private lootEntities: Map<string, any> = new Map();
 
   private socketToPlayer: Map<string, string> = new Map(); // socketId -> characterName
   private lastActionTimes: Map<string, number> = new Map(); // charName -> timestamp
@@ -169,7 +170,33 @@ export class WorldTick {
             const totalDamage = baseDamage + weaponDamage;
             
             npc.health -= totalDamage;
+            
+            this.ws.broadcast({
+              type: "combat_feedback",
+              targetId,
+              damage: totalDamage,
+              health: npc.health,
+              maxHealth: npc.maxHealth
+            });
+
             if (npc.health <= 0) {
+              if (npc.dropTable) {
+                for (const drop of npc.dropTable) {
+                  if (Math.random() < drop.chance) {
+                    const item = ItemRegistry.createInstance(drop.itemId);
+                    if (item) {
+                      const lootId = `loot_${Date.now()}_${Math.random()}`;
+                      this.lootEntities.set(lootId, {
+                        id: lootId,
+                        item: item,
+                        position: { x: npc.position.x, y: npc.position.y }
+                      });
+                      this.ws.sendToPlayer(id, { type: "dialogue", source: "System", text: `You see ${item.name} drop!` });
+                    }
+                  }
+                }
+              }
+
               npc.health = npc.maxHealth || 100; // Respawn
               this.ws.sendToPlayer(id, { type: "dialogue", source: "System", text: `You destroyed ${npc.name}! It respawns.` });
 
@@ -183,8 +210,6 @@ export class WorldTick {
                   }
                 }
               }
-            } else {
-              this.ws.sendToPlayer(id, { type: "dialogue", source: "System", text: `You hit ${npc.name} with ${weaponName} for ${totalDamage} damage! (${npc.health}/${npc.maxHealth})` });
             }
           }
         }
@@ -192,9 +217,11 @@ export class WorldTick {
         if (!checkCooldown(500)) return;
         const targetId = msg.targetId;
         const npc = this.npcSystem.getNPC(targetId);
+        const loot = this.lootEntities.get(targetId);
         if (npc) {
           const dist = Math.hypot(player.position.x - npc.position.x, player.position.y - npc.position.y);
           if (dist < 20) {
+            // ... NPC interaction logic ...
             const interaction = this.npcSystem.handleInteraction(
               targetId, 
               player,
@@ -222,7 +249,6 @@ export class WorldTick {
               }
 
               // Check for quest completion
-              // We can now use the quest data to see if this NPC is the target
               const activeQuests = player.quests.filter((q: any) => !q.completed);
               for (const q of activeQuests) {
                 let completed = false;
@@ -262,6 +288,19 @@ export class WorldTick {
               text: "Target is too far away."
             });
           }
+        } else if (loot) {
+          const dist = Math.hypot(player.position.x - loot.position.x, player.position.y - loot.position.y);
+          if (dist < 20) {
+            this.inventorySystem.addItem(player, loot.item);
+            this.lootEntities.delete(targetId);
+            this.ws.sendToPlayer(id, { type: "dialogue", source: "System", text: `Picked up ${loot.item.name}!` });
+          } else {
+            this.ws.sendToPlayer(id, {
+              type: "dialogue",
+              source: "System",
+              text: "Target is too far away."
+            });
+          }
         }
       } else if (msg.type === "dialogue_choice") {
         const { npcId, nodeId, choiceId } = msg;
@@ -287,6 +326,15 @@ export class WorldTick {
             }
           }
         }
+      } else if (msg.type === "equip") {
+        this.inventorySystem.equipItem(player, msg.itemId);
+        this.saveAll();
+      } else if (msg.type === "unequip") {
+        this.inventorySystem.unequipItem(player, msg.slot);
+        this.saveAll();
+      } else if (msg.type === "drop") {
+        this.inventorySystem.removeItem(player, msg.itemId);
+        this.saveAll();
       }
     };
   }
@@ -422,7 +470,8 @@ export class WorldTick {
       tick: this.tickCount,
       activeChunkIds: activeChunks.map(c => c.id),
       players: players.map(p => ({ ...p, questStatus: this.questSystem.getQuestStatus(p) })),
-      npcs: this.npcSystem.getAllNPCs()
+      npcs: this.npcSystem.getAllNPCs(),
+      loot: Array.from(this.lootEntities.values())
     });
 
     if (this.tickCount % 100 === 0) {

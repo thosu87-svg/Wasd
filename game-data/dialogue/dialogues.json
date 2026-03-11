@@ -229,5 +229,31 @@
     "questCompleteLines": {
       "hermit_quest": "Thank you, these will do nicely."
     }
+  },
+  {
+    "id": "dialogue_npc_7",
+    "greeting": "I've lost my cart. Have you seen it?",
+    "nodes": {
+      "root": {
+        "text": "My cart is lost somewhere in the woods.",
+        "choices": [{ "id": "merchant_1", "text": "I'll look for it.", "nextNodeId": "root" }]
+      }
+    },
+    "questStartLines": { "merchant_quest": "Find my cart!" },
+    "questProgressLines": { "merchant_quest": "Any luck?" },
+    "questCompleteLines": { "merchant_quest": "Thank you!" }
+  },
+  {
+    "id": "dialogue_npc_8",
+    "greeting": "I need help with my experiments.",
+    "nodes": {
+      "root": {
+        "text": "My master needs rare ingredients.",
+        "choices": [{ "id": "apprentice_1", "text": "I can help.", "nextNodeId": "root" }]
+      }
+    },
+    "questStartLines": { "apprentice_quest": "Bring me 5 mushrooms." },
+    "questProgressLines": { "apprentice_quest": "Still need mushrooms." },
+    "questCompleteLines": { "apprentice_quest": "Perfect." }
   }
 ]

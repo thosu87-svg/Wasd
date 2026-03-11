@@ -127,5 +127,29 @@
       "gold": 100,
       "xp": 200
     }
+  },
+  {
+    "id": "merchant_quest",
+    "title": "The Lost Merchant",
+    "giverNpcId": "npc_7_merchant",
+    "targetNpcId": "npc_7_merchant",
+    "objectiveType": "talk_to",
+    "reward": {
+      "gold": 50,
+      "xp": 100
+    }
+  },
+  {
+    "id": "apprentice_quest",
+    "title": "Alchemist's Apprentice",
+    "giverNpcId": "npc_8_apprentice",
+    "targetNpcId": "npc_8_apprentice",
+    "objectiveType": "collect",
+    "requiredItemId": "mushroom",
+    "requiredCount": 5,
+    "reward": {
+      "gold": 75,
+      "xp": 150
+    }
   }
 ]

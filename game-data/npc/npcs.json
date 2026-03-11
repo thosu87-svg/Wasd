@@ -24,7 +24,10 @@
     "stats": {
       "health": 100,
       "maxHealth": 100
-    }
+    },
+    "dropTable": [
+      { "itemId": "iron_scrap", "chance": 0.5 }
+    ]
   },
   {
     "id": "npc_3",
@@ -59,7 +62,10 @@
     "stats": {
       "health": 50,
       "maxHealth": 50
-    }
+    },
+    "dropTable": [
+      { "itemId": "wolf_pelt", "chance": 1.0 }
+    ]
   },
   {
     "id": "npc_6_hermit",
@@ -67,6 +73,22 @@
     "role": "Quest Giver",
     "dialogueId": "dialogue_npc_6",
     "questHooks": ["hermit_quest"],
+    "faction": "Neutral"
+  },
+  {
+    "id": "npc_7_merchant",
+    "name": "Lost Merchant",
+    "role": "Trader",
+    "dialogueId": "dialogue_npc_7",
+    "questHooks": ["merchant_quest"],
+    "faction": "Neutral"
+  },
+  {
+    "id": "npc_8_apprentice",
+    "name": "Alchemist's Apprentice",
+    "role": "Quest Giver",
+    "dialogueId": "dialogue_npc_8",
+    "questHooks": ["apprentice_quest"],
     "faction": "Neutral"
   }
 ]

@@ -1,4 +1,15 @@
 import * as THREE from "three";
+import { showTooltip, hideTooltip, createWorldLabel, removeWorldLabel } from "../ui/hud";
+import { getClosestInteractable } from "../utils/interaction";
+
+function projectToScreen(x: number, y: number, z: number) {
+  const vector = new THREE.Vector3(x, y, z);
+  vector.project(camera);
+  return {
+    x: (vector.x + 1) / 2 * window.innerWidth,
+    y: -(vector.y - 1) / 2 * window.innerHeight
+  };
+}
 
 let scene: THREE.Scene;
 let camera: THREE.PerspectiveCamera;
@@ -6,12 +17,40 @@ let renderer: THREE.WebGLRenderer;
 
 const playerMeshes = new Map<string, THREE.Mesh>();
 const npcMeshes = new Map<string, THREE.Mesh>();
+const lootMeshes = new Map<string, THREE.Group>();
 const chunkMeshes = new Map<string, THREE.LineSegments>();
+const activeLabels = new Set<string>();
 
 // For interpolation
 const targetPositions = new Map<string, THREE.Vector3>();
 
-export function initRenderer(canvas: HTMLCanvasElement) {
+export function showFloatingText(text: string, x: number, y: number) {
+  const vector = new THREE.Vector3(x, 2, y);
+  vector.project(camera);
+  const screenX = (vector.x + 1) / 2 * window.innerWidth;
+  const screenY = -(vector.y - 1) / 2 * window.innerHeight;
+  
+  const div = document.createElement("div");
+  div.style.position = "fixed";
+  div.style.left = `${screenX}px`;
+  div.style.top = `${screenY}px`;
+  div.style.color = "#ff0000";
+  div.style.fontWeight = "bold";
+  div.style.fontSize = "20px";
+  div.style.pointerEvents = "none";
+  div.style.zIndex = "1001";
+  div.textContent = text;
+  document.body.appendChild(div);
+  
+  div.animate([
+    { transform: "translateY(0)", opacity: 1 },
+    { transform: "translateY(-50px)", opacity: 0 }
+  ], {
+    duration: 1000,
+    easing: "ease-out"
+  }).onfinish = () => div.remove();
+}
+export function initRenderer(canvas: HTMLCanvasElement, myPlayerId: string) {
   renderer = new THREE.WebGLRenderer({ canvas });
   renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -104,7 +143,13 @@ export function updateWorldState(state: any, myPlayerId: string | null) {
       scene.add(mesh);
       playerMeshes.set(p.id, mesh);
     }
-    targetPositions.set(p.id, new THREE.Vector3(p.position.x, 2, p.position.y));
+    
+    let target = targetPositions.get(p.id);
+    if (!target) {
+      target = new THREE.Vector3();
+      targetPositions.set(p.id, target);
+    }
+    target.set(p.position.x, 2, p.position.y);
   }
 
   // Remove disconnected players
@@ -128,7 +173,23 @@ export function updateWorldState(state: any, myPlayerId: string | null) {
       scene.add(mesh);
       npcMeshes.set(npc.id, mesh);
     }
-    targetPositions.set(npc.id, new THREE.Vector3(npc.position.x, 2, npc.position.y));
+    
+    let target = targetPositions.get(npc.id);
+    if (!target) {
+      target = new THREE.Vector3();
+      targetPositions.set(npc.id, target);
+    }
+    target.set(npc.position.x, 2, npc.position.y);
+    
+    // Update health bar (simple hack: scale the sphere)
+    const mesh = npcMeshes.get(npc.id);
+    
+    // Position label
+    const screenPos = projectToScreen(npc.position.x, 4, npc.position.y);
+    const label = createWorldLabel(npc.id, npc.name, 'npc', npc.health / npc.maxHealth);
+    label.style.left = `${screenPos.x}px`;
+    label.style.top = `${screenPos.y}px`;
+    activeLabels.add(npc.id);
   }
 
   // Remove despawned NPCs
@@ -136,6 +197,68 @@ export function updateWorldState(state: any, myPlayerId: string | null) {
     if (!currentNPCs.has(id)) {
       scene.remove(mesh);
       npcMeshes.delete(id);
+    }
+  }
+
+  // Render Loot (Thematic bag/chest)
+  const currentLoot = new Set<string>();
+  for (const loot of state.loot) {
+    currentLoot.add(loot.id);
+    const lootGroup = lootMeshes.get(loot.id);
+    if (!lootGroup) {
+      const group = new THREE.Group();
+      // Base
+      const baseGeo = new THREE.BoxGeometry(2, 1.5, 2);
+      const baseMat = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+      const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+      baseMesh.position.y = 0.75;
+      group.add(baseMesh);
+      // Lid
+      const lidGeo = new THREE.BoxGeometry(2.2, 0.5, 2.2);
+      const lidMat = new THREE.MeshStandardMaterial({ color: 0x5D2E0A });
+      const lidMesh = new THREE.Mesh(lidGeo, lidMat);
+      lidMesh.position.y = 1.75;
+      group.add(lidMesh);
+      
+      group.position.set(loot.position.x, 0, loot.position.y);
+      scene.add(group);
+      lootMeshes.set(loot.id, group);
+    } else {
+      lootGroup.position.set(loot.position.x, 0, loot.position.y);
+    }
+    
+    // Position label
+    const screenPos = projectToScreen(loot.position.x, 2, loot.position.y);
+    const label = createWorldLabel(loot.id, loot.item.name, 'loot');
+    label.style.left = `${screenPos.x}px`;
+    label.style.top = `${screenPos.y}px`;
+    activeLabels.add(loot.id);
+  }
+
+  // Remove picked up loot
+  for (const [id, mesh] of lootMeshes.entries()) {
+    if (!currentLoot.has(id)) {
+      scene.remove(mesh);
+      lootMeshes.delete(id);
+    }
+  }
+
+  // Tooltip logic
+  const myPlayer = state.players.find((p: any) => p.id === myPlayerId);
+  if (myPlayer) {
+    const closestInteractable = getClosestInteractable(myPlayer, state);
+
+    if (closestInteractable) {
+      if (closestInteractable.interactionType === 'loot') {
+        const item = closestInteractable.item;
+        const rarity = item.rarity || 'Common';
+        const damage = item.damage ? ` | Dmg: ${item.damage}` : '';
+        showTooltip(`Press E to pick up ${item.name} (${item.type}) [${rarity}]${damage}`);
+      } else {
+        showTooltip(`Press E to interact with ${closestInteractable.name || 'NPC'}`);
+      }
+    } else {
+      hideTooltip();
     }
   }
 
@@ -160,6 +283,15 @@ export function updateWorldState(state: any, myPlayerId: string | null) {
       }
     }
   }
+
+  // Remove inactive labels
+  const allLabelIds = new Set(Array.from(document.querySelectorAll('[id^="label-"]')).map(el => el.id.replace('label-', '')));
+  for (const id of allLabelIds) {
+    if (!activeLabels.has(id)) {
+      removeWorldLabel(id);
+    }
+  }
+  activeLabels.clear();
 
   // Remove inactive chunks
   for (const [id, mesh] of chunkMeshes.entries()) {

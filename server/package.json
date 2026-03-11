@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsx src/tools/validateContent.ts && tsc -p tsconfig.json",
     "start": "node dist/index.js",
+    "validate": "tsx src/tools/validateContent.ts",
     "migrate": "node-pg-migrate"
   },
   "dependencies": {

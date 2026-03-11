@@ -48,6 +48,7 @@ export class NPCSystem {
       position: { x, y, z: 0 },
       health: def?.stats?.health || 100,
       maxHealth: def?.stats?.maxHealth || 100,
+      dropTable: def?.dropTable || [],
       stamina: 100,
       inventory: [],
       personality: this.personalityEngine.generateTraits(),

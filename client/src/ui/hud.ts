@@ -114,6 +114,57 @@ export function updateCooldowns(cooldowns: { attack: number, interact: number, e
   updateCd("cd-equip", equipRemaining);
 }
 
+export function showFloatingText(text: string, x: number, y: number) {
+  const div = document.createElement("div");
+  div.style.position = "fixed";
+  div.style.left = `${x}px`;
+  div.style.top = `${y}px`;
+  div.style.color = "#ff0000";
+  div.style.fontWeight = "bold";
+  div.style.fontSize = "20px";
+  div.style.pointerEvents = "none";
+  div.style.zIndex = "1001";
+  div.textContent = text;
+  document.body.appendChild(div);
+  
+  // Animate and remove
+  div.animate([
+    { transform: "translateY(0)", opacity: 1 },
+    { transform: "translateY(-50px)", opacity: 0 }
+  ], {
+    duration: 1000,
+    easing: "ease-out"
+  }).onfinish = () => div.remove();
+}
+
+export function showTooltip(text: string) {
+  let tooltip = document.getElementById("interaction-tooltip");
+  if (!tooltip) {
+    tooltip = document.createElement("div");
+    tooltip.id = "interaction-tooltip";
+    tooltip.style.position = "fixed";
+    tooltip.style.bottom = "100px";
+    tooltip.style.left = "50%";
+    tooltip.style.transform = "translateX(-50%)";
+    tooltip.style.background = "rgba(0, 0, 0, 0.8)";
+    tooltip.style.color = "#fff";
+    tooltip.style.padding = "8px 16px";
+    tooltip.style.borderRadius = "6px";
+    tooltip.style.border = "1px solid #00ff00";
+    tooltip.style.zIndex = "1000";
+    tooltip.style.pointerEvents = "none";
+    document.body.appendChild(tooltip);
+  }
+  tooltip.textContent = text;
+}
+
+export function hideTooltip() {
+  const tooltip = document.getElementById("interaction-tooltip");
+  if (tooltip && tooltip.parentNode) {
+    tooltip.parentNode.removeChild(tooltip);
+  }
+}
+
 export function showDialogue(source: string, text: string, choices: any[] = [], npcId?: string) {
   let dialogueBox = document.getElementById("dialogue-box");
   if (!dialogueBox) {
@@ -172,7 +223,7 @@ export function showDialogue(source: string, text: string, choices: any[] = [], 
       const node = target.getAttribute("data-node-id");
       const choiceId = target.getAttribute("data-choice-id");
       if (nid && node && choiceId) {
-        sendDialogueChoice(nid, node, choiceId);
+        (window as any).sendDialogueChoice(nid, node, choiceId);
       }
     });
   });
@@ -189,4 +240,81 @@ export function showDialogue(source: string, text: string, choices: any[] = [], 
       }
     }, 5000);
   }
+}
+
+export function removeWorldLabel(id: string) {
+  const label = document.getElementById(`label-${id}`);
+  if (label) label.remove();
+}
+
+export function createWorldLabel(id: string, text: string, type: 'npc' | 'loot', healthPercent?: number) {
+  let label = document.getElementById(`label-${id}`);
+  if (!label) {
+    label = document.createElement("div");
+    label.id = `label-${id}`;
+    label.style.position = "fixed";
+    label.style.pointerEvents = "none";
+    label.style.zIndex = "1000";
+    label.style.textAlign = "center";
+    document.body.appendChild(label);
+  }
+  
+  let html = `<div style="color: white; font-size: 12px; text-shadow: 1px 1px 1px black; font-weight: bold;">${text}</div>`;
+  if (type === 'npc' && healthPercent !== undefined) {
+    html += `
+      <div style="width: 40px; height: 6px; background: #333; margin: 2px auto; border: 1px solid #000;">
+        <div style="width: ${Math.max(0, Math.min(100, healthPercent * 100))}%; height: 100%; background: #00ff00;"></div>
+      </div>
+    `;
+  }
+  label.innerHTML = html;
+  return label;
+}
+
+export function renderInventoryPanel(player: any, ws: WebSocket) {
+  let panel = document.getElementById("inventory-panel");
+  if (!panel) {
+    panel = document.createElement("div");
+    panel.id = "inventory-panel";
+    panel.style.position = "fixed";
+    panel.style.top = "50%";
+    panel.style.left = "50%";
+    panel.style.transform = "translate(-50%, -50%)";
+    panel.style.background = "rgba(0, 0, 0, 0.9)";
+    panel.style.color = "#fff";
+    panel.style.padding = "20px";
+    panel.style.borderRadius = "12px";
+    panel.style.border = "1px solid #00ff00";
+    panel.style.zIndex = "2000";
+    panel.style.minWidth = "300px";
+    document.body.appendChild(panel);
+  }
+
+  let html = `<h2 style="margin-top:0; color: #00ff00;">Inventory</h2>`;
+  
+  // Equipment
+  html += `<div style="margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px;">
+    <strong>Equipped:</strong><br/>
+    Weapon: ${player.equipment.weapon ? `${player.equipment.weapon.name} <button onclick="window.unequip('weapon')" style="cursor:pointer; background:#555; color:#fff; border:none; padding:2px 5px; border-radius:3px;">Unequip</button>` : 'None'}
+  </div>`;
+
+  // Inventory
+  html += `<strong>Items:</strong><ul style="list-style:none; padding:0;">`;
+  player.inventory.forEach((item: any) => {
+    html += `<li style="margin-bottom: 5px; background: #222; padding: 5px; border-radius: 4px; display:flex; justify-content:space-between;">
+      ${item.name} (${item.type})
+      <div>
+        ${item.type === 'weapon' ? `<button onclick="window.equip('${item.id}')" style="cursor:pointer; background:#008800; color:#fff; border:none; padding:2px 5px; border-radius:3px;">Equip</button>` : ''}
+        <button onclick="window.drop('${item.id}')" style="cursor:pointer; background:#880000; color:#fff; border:none; padding:2px 5px; border-radius:3px;">Drop</button>
+      </div>
+    </li>`;
+  });
+  html += `</ul><button onclick="document.getElementById('inventory-panel').remove()" style="margin-top:10px; cursor:pointer;">Close</button>`;
+  
+  panel.innerHTML = html;
+
+  // Define global actions for buttons
+  (window as any).equip = (itemId: string) => ws.send(JSON.stringify({ type: 'equip', itemId }));
+  (window as any).unequip = (slot: string) => ws.send(JSON.stringify({ type: 'unequip', slot }));
+  (window as any).drop = (itemId: string) => ws.send(JSON.stringify({ type: 'drop', itemId }));
 }

@@ -1,5 +1,6 @@
-import { updateWorldState } from "../engine/renderer";
-import { showDialogue, updateHUD, updateCooldowns } from "../ui/hud";
+import { updateWorldState, showFloatingText } from "../engine/renderer";
+import { showDialogue, updateHUD, updateCooldowns, renderInventoryPanel } from "../ui/hud";
+import { getClosestInteractable } from "../utils/interaction";
 
 export let myPlayerId: string | null = null;
 let latestState: any = null;
@@ -80,6 +81,12 @@ export function connectSocket() {
         }
       } else if (data.type === "dialogue") {
         showDialogue(data.source, data.text, data.choices, data.npcId);
+      } else if (data.type === "combat_feedback") {
+        // Find NPC position
+        const npc = latestState.npcs.find((n: any) => n.id === data.targetId);
+        if (npc) {
+          showFloatingText(`-${data.damage}`, npc.position.x, npc.position.y);
+        }
       }
     } catch (e) {
       console.error("Failed to parse message", e);
@@ -148,31 +155,30 @@ export function connectSocket() {
 
     if (e.key === "e" || e.key === "E") {
       if (Date.now() < cooldowns.interact) return;
-      // Find closest NPC
-      if (latestState && latestState.npcs && latestState.players) {
+      // Find closest NPC or Loot
+      if (latestState && (latestState.npcs || latestState.loot) && latestState.players) {
         const myPlayer = latestState.players.find((p: any) => p.id === myPlayerId);
         if (myPlayer) {
-          let closestNpc = null;
-          let minDistance = Infinity;
+          const closestInteractable = getClosestInteractable(myPlayer, latestState);
           
-          for (const npc of latestState.npcs) {
-            const dist = Math.hypot(myPlayer.position.x - npc.position.x, myPlayer.position.y - npc.position.y);
-            if (dist < minDistance) {
-              minDistance = dist;
-              closestNpc = npc;
-            }
-          }
-          
-          if (closestNpc && minDistance < 30) {
+          if (closestInteractable) {
             cooldowns.interact = Date.now() + CD_DURATIONS.interact;
             ws.send(JSON.stringify({
               type: "interact",
-              targetId: closestNpc.id
+              targetId: closestInteractable.id
             }));
           } else {
             showDialogue("System", "No one is nearby to interact with.");
           }
         }
+      }
+      return;
+    }
+
+    if (e.key === "i" || e.key === "I") {
+      const myPlayer = latestState.players.find((p: any) => p.id === myPlayerId);
+      if (myPlayer) {
+        renderInventoryPanel(myPlayer, ws);
       }
       return;
     }

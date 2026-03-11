@@ -7,7 +7,14 @@ export class InventorySystem {
   }
 
   removeItem(player: any, itemId: string) {
+    // Remove from inventory
     player.inventory = player.inventory.filter((item: any) => item.id !== itemId);
+    
+    // Remove from equipment if equipped
+    if (player.equipment.weapon && player.equipment.weapon.id === itemId) {
+      player.equipment.weapon = null;
+    }
+    
     return player.inventory;
   }
 
