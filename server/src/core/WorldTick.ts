@@ -199,13 +199,16 @@ export class WorldTick {
               targetId, 
               charName, 
               player.quests || [],
-              this.questSystem.getQuestDefinitions()
+              this.questSystem.getQuestDefinitions(),
+              player.flags || {}
             );
             if (interaction) {
               this.ws.sendToPlayer(id, {
                 type: "dialogue",
                 source: interaction.source,
-                text: interaction.text
+                text: interaction.text,
+                choices: interaction.choices,
+                npcId: interaction.npcId
               });
 
               if (interaction.questId) {
@@ -262,6 +265,30 @@ export class WorldTick {
             });
           }
         }
+      } else if (msg.type === "dialogue_choice") {
+        const { npcId, nodeId } = msg;
+        const interaction = this.npcSystem.handleChoice(npcId, nodeId, player);
+        if (interaction) {
+          this.ws.sendToPlayer(id, {
+            type: "dialogue",
+            source: interaction.source,
+            text: interaction.text,
+            choices: interaction.choices,
+            npcId: interaction.npcId
+          });
+
+          if (interaction.questId) {
+            const quest = this.questSystem.startQuest(player, interaction.questId);
+            if (quest) {
+              this.ws.sendToPlayer(id, {
+                type: "dialogue",
+                source: "System",
+                text: `Quest Started: ${quest.name}`
+              });
+              this.saveAll();
+            }
+          }
+        }
       }
     };
   }
@@ -313,6 +340,7 @@ export class WorldTick {
   }
 
   private hydratePlayer(player: any) {
+    if (!player.flags) player.flags = {};
     if (player.inventory) {
       player.inventory = player.inventory.map((item: any) => ItemRegistry.hydrate(item));
     }

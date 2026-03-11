@@ -16,9 +16,22 @@ const CD_DURATIONS = {
   equip: 500
 };
 
+export function sendDialogueChoice(npcId: string, nodeId: string) {
+  if (globalWs && globalWs.readyState === WebSocket.OPEN) {
+    globalWs.send(JSON.stringify({
+      type: "dialogue_choice",
+      npcId,
+      nodeId
+    }));
+  }
+}
+
+let globalWs: WebSocket | null = null;
+
 export function connectSocket() {
   const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
   const ws = new WebSocket(`${wsProtocol}//${location.host}/ws`);
+  globalWs = ws;
 
   // Update cooldowns UI every frame
   const cdInterval = setInterval(() => {
@@ -63,7 +76,7 @@ export function connectSocket() {
           }
         }
       } else if (data.type === "dialogue") {
-        showDialogue(data.source, data.text);
+        showDialogue(data.source, data.text, data.choices, data.npcId);
       }
     } catch (e) {
       console.error("Failed to parse message", e);

@@ -47,6 +47,15 @@ export class QuestEngine {
       }
     }
 
+    // Check flag prerequisites
+    if (quest.requiredFlags && quest.requiredFlags.length > 0) {
+      for (const flag of quest.requiredFlags) {
+        if (!player.flags || !player.flags[flag]) {
+          return null; // Flag not met
+        }
+      }
+    }
+
     const newQuest = { ...quest, startedAt: Date.now(), completed: false };
     player.quests.push(newQuest);
     return newQuest;

@@ -20,7 +20,8 @@ export class PlayerSystem {
       },
       faction: null,
       civilization: null,
-      matrixEnergy: 0
+      matrixEnergy: 0,
+      flags: {}
     };
     this.players.set(id, player);
     return player;

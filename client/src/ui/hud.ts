@@ -1,3 +1,5 @@
+import { sendDialogueChoice } from "../networking/websocketClient";
+
 export function renderHUD() {
   const hud = document.createElement("div");
   hud.id = "main-hud";
@@ -100,7 +102,7 @@ export function updateCooldowns(cooldowns: { attack: number, interact: number, e
   updateCd("cd-equip", equipRemaining);
 }
 
-export function showDialogue(source: string, text: string) {
+export function showDialogue(source: string, text: string, choices: any[] = [], npcId?: string) {
   let dialogueBox = document.getElementById("dialogue-box");
   if (!dialogueBox) {
     dialogueBox = document.createElement("div");
@@ -109,25 +111,68 @@ export function showDialogue(source: string, text: string) {
     dialogueBox.style.bottom = "20px";
     dialogueBox.style.left = "50%";
     dialogueBox.style.transform = "translateX(-50%)";
-    dialogueBox.style.background = "rgba(0, 0, 0, 0.8)";
+    dialogueBox.style.background = "rgba(0, 0, 0, 0.9)";
     dialogueBox.style.color = "#fff";
-    dialogueBox.style.padding = "16px 24px";
-    dialogueBox.style.borderRadius = "8px";
+    dialogueBox.style.padding = "20px 30px";
+    dialogueBox.style.borderRadius = "12px";
     dialogueBox.style.fontFamily = "sans-serif";
-    dialogueBox.style.minWidth = "300px";
-    dialogueBox.style.textAlign = "center";
+    dialogueBox.style.minWidth = "400px";
+    dialogueBox.style.maxWidth = "600px";
+    dialogueBox.style.textAlign = "left";
+    dialogueBox.style.boxShadow = "0 10px 25px rgba(0,0,0,0.5)";
+    dialogueBox.style.border = "1px solid rgba(255,255,255,0.1)";
+    dialogueBox.style.zIndex = "1000";
     document.body.appendChild(dialogueBox);
   }
   
-  dialogueBox.innerHTML = `<strong>${source}:</strong> ${text}`;
+  let html = `<div style="margin-bottom: 12px;"><strong style="color: #00ff00; font-size: 1.1em;">${source}:</strong> <span style="line-height: 1.4;">${text}</span></div>`;
   
-  // Auto-hide after 5 seconds
+  if (choices && choices.length > 0 && npcId) {
+    html += `<div style="display: flex; flex-direction: column; gap: 8px; margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px;">`;
+    choices.forEach((choice, index) => {
+      html += `
+        <button 
+          class="dialogue-choice-btn" 
+          data-npc-id="${npcId}" 
+          data-node-id="${choice.nextNodeId}"
+          style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; text-align: left; transition: all 0.2s;"
+          onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.borderColor='#00ff00';"
+          onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.2)';"
+        >
+          ${index + 1}. ${choice.text}
+        </button>
+      `;
+    });
+    html += `</div>`;
+  } else {
+    html += `<div style="font-size: 0.8em; opacity: 0.5; margin-top: 12px; text-align: center;">(Press E to continue)</div>`;
+  }
+  
+  dialogueBox.innerHTML = html;
+
+  // Add event listeners to buttons
+  const buttons = dialogueBox.querySelectorAll(".dialogue-choice-btn");
+  buttons.forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const target = e.currentTarget as HTMLButtonElement;
+      const nid = target.getAttribute("data-npc-id");
+      const node = target.getAttribute("data-node-id");
+      if (nid && node) {
+        sendDialogueChoice(nid, node);
+      }
+    });
+  });
+  
+  // Auto-hide after 10 seconds if no choices
   if ((window as any).dialogueTimeout) {
     clearTimeout((window as any).dialogueTimeout);
   }
-  (window as any).dialogueTimeout = setTimeout(() => {
-    if (dialogueBox && dialogueBox.parentNode) {
-      dialogueBox.parentNode.removeChild(dialogueBox);
-    }
-  }, 5000);
+  
+  if (!choices || choices.length === 0) {
+    (window as any).dialogueTimeout = setTimeout(() => {
+      if (dialogueBox && dialogueBox.parentNode) {
+        dialogueBox.parentNode.removeChild(dialogueBox);
+      }
+    }, 5000);
+  }
 }

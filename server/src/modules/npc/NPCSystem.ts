@@ -64,7 +64,7 @@ export class NPCSystem {
     return this.npcs.get(id);
   }
 
-  handleInteraction(npcId: string, charName: string, playerQuests: any[] = [], questDefinitions: Map<string, any> = new Map()) {
+  handleInteraction(npcId: string, charName: string, playerQuests: any[] = [], questDefinitions: Map<string, any> = new Map(), playerFlags: any = {}) {
     const npc = this.npcs.get(npcId);
     if (!npc) return null;
 
@@ -77,17 +77,17 @@ export class NPCSystem {
       };
     }
 
+    // Check if there's a specific node to start with based on quest state
+    let startNodeId = "root";
     let text = dialogue.greeting;
     let questId = null;
+    let choices = [];
 
-    // Check for quest-specific dialogue
+    // Check for quest-specific dialogue (Old Logic)
     if (npc.questHooks && npc.questHooks.length > 0) {
       for (const qId of npc.questHooks) {
         const playerQuest = playerQuests.find(q => q.id === qId);
         if (!playerQuest) {
-          // Player hasn't started this quest yet
-          
-          // Check prerequisites
           const questDef = questDefinitions.get(qId);
           let prereqsMet = true;
           if (questDef && questDef.prerequisiteQuestIds) {
@@ -105,7 +105,7 @@ export class NPCSystem {
               text = dialogue.questPrerequisiteLines[qId];
               break;
             }
-            continue; // Skip offering if prereqs not met and no specific line
+            continue;
           }
 
           if (dialogue.questStartLines && dialogue.questStartLines[qId]) {
@@ -114,13 +114,11 @@ export class NPCSystem {
             break;
           }
         } else if (!playerQuest.completed) {
-          // Player is on this quest
           if (dialogue.questProgressLines && dialogue.questProgressLines[qId]) {
             text = dialogue.questProgressLines[qId];
             break;
           }
         } else {
-          // Player completed this quest
           if (dialogue.questCompleteLines && dialogue.questCompleteLines[qId]) {
             text = dialogue.questCompleteLines[qId];
             break;
@@ -129,20 +127,77 @@ export class NPCSystem {
       }
     }
 
-    // Check if this NPC is a target for an active quest
-    for (const playerQuest of playerQuests) {
-      if (!playerQuest.completed && playerQuest.targetNpcId === npcId) {
-        if (dialogue.questCompleteLines && dialogue.questCompleteLines[playerQuest.id]) {
-          text = dialogue.questCompleteLines[playerQuest.id];
-          break;
+    // New Logic: Branching Nodes
+    if (dialogue.nodes) {
+      // Determine which node to show
+      let activeNodeId = "root";
+      
+      // If we have quest-specific nodes, we could prioritize them here
+      // For now, let's just use "root" as default or check for state-based entry nodes
+      if (dialogue.entryNodes) {
+        for (const entry of dialogue.entryNodes) {
+          let match = true;
+          if (entry.conditionFlag && !playerFlags[entry.conditionFlag]) match = false;
+          if (entry.conditionQuestId) {
+            const q = playerQuests.find(pq => pq.id === entry.conditionQuestId);
+            if (entry.conditionQuestState === "completed" && (!q || !q.completed)) match = false;
+            if (entry.conditionQuestState === "active" && (!q || q.completed)) match = false;
+            if (entry.conditionQuestState === "not_started" && q) match = false;
+          }
+          if (match) {
+            activeNodeId = entry.nodeId;
+            break;
+          }
         }
+      }
+
+      const node = dialogue.nodes[activeNodeId];
+      if (node) {
+        text = node.text;
+        choices = (node.choices || []).filter((c: any) => {
+          if (c.conditionFlag && !playerFlags[c.conditionFlag]) return false;
+          return true;
+        });
       }
     }
 
     return {
       source: npc.name,
       text,
-      questId
+      questId,
+      choices,
+      npcId
+    };
+  }
+
+  handleChoice(npcId: string, nodeId: string, player: any) {
+    const npc = this.npcs.get(npcId);
+    if (!npc) return null;
+
+    const dialogue = this.dialogues.get(npc.dialogueId);
+    if (!dialogue || !dialogue.nodes) return null;
+
+    const node = dialogue.nodes[nodeId];
+    if (!node) return null;
+
+    // Apply effects of the choice
+    if (node.setFlag) {
+      player.flags[node.setFlag] = true;
+    }
+
+    let questId = node.triggerQuestId || null;
+    let text = node.text;
+    let choices = (node.choices || []).filter((c: any) => {
+      if (c.conditionFlag && !player.flags[c.conditionFlag]) return false;
+      return true;
+    });
+
+    return {
+      source: npc.name,
+      text,
+      questId,
+      choices,
+      npcId
     };
   }
 

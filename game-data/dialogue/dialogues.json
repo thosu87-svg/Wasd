@@ -2,6 +2,40 @@
   {
     "id": "dialogue_npc_1",
     "greeting": "Hello, I am Test NPC. Welcome to Areloria!",
+    "entryNodes": [
+      { "nodeId": "helped", "conditionFlag": "helped_test_npc" }
+    ],
+    "nodes": {
+      "root": {
+        "text": "Greetings, traveler! I'm in a bit of a bind. Would you be willing to help a simple merchant?",
+        "choices": [
+          { "text": "Of course, what do you need?", "nextNodeId": "accept_help" },
+          { "text": "I'm too busy for your problems.", "nextNodeId": "decline_help" }
+        ]
+      },
+      "accept_help": {
+        "text": "That's the spirit! I've set a mark on your record. Come back when you're ready for work.",
+        "setFlag": "helped_test_npc",
+        "choices": [
+          { "text": "I'll be back.", "nextNodeId": "root" }
+        ]
+      },
+      "decline_help": {
+        "text": "Hmph. Typical traveler. Be on your way then.",
+        "choices": [
+          { "text": "Fine.", "nextNodeId": "root" }
+        ]
+      },
+      "helped": {
+        "text": "Ah, my favorite traveler! Ready to help me again?",
+        "choices": [
+          { "text": "Always.", "nextNodeId": "root" }
+        ]
+      }
+    },
+    "questPrerequisiteLines": {
+      "first_steps": "I only give tasks to those I can trust. Talk to me first."
+    },
     "questStartLines": {
       "first_steps": "Greetings, traveler! I have a task for you if you're interested. Could you check on my friend at the distant outpost?",
       "missing_letter": "I have a letter for the Village Elder. Could you deliver it for me?"
@@ -33,8 +67,54 @@
   {
     "id": "dialogue_npc_3",
     "greeting": "Welcome to our village. I am the Elder.",
+    "entryNodes": [
+      { "nodeId": "respectful", "conditionFlag": "elder_respect" },
+      { "nodeId": "disrespectful", "conditionFlag": "elder_disrespect" }
+    ],
+    "nodes": {
+      "root": {
+        "text": "You look like a capable traveler. Tell me, what brings you to our humble village?",
+        "choices": [
+          { "text": "I seek to help those in need.", "nextNodeId": "respect_path" },
+          { "text": "I'm just passing through, don't mind me.", "nextNodeId": "neutral_path" },
+          { "text": "None of your business, old man.", "nextNodeId": "disrespect_path" }
+        ]
+      },
+      "respect_path": {
+        "text": "It is rare to find such virtue these days. You have my respect.",
+        "setFlag": "elder_respect",
+        "choices": [
+          { "text": "Thank you, Elder.", "nextNodeId": "root" }
+        ]
+      },
+      "neutral_path": {
+        "text": "I see. Well, stay as long as you like, but stay out of trouble.",
+        "choices": [
+          { "text": "Understood.", "nextNodeId": "root" }
+        ]
+      },
+      "disrespect_path": {
+        "text": "Such insolence! I have no time for the likes of you.",
+        "setFlag": "elder_disrespect",
+        "choices": [
+          { "text": "Whatever.", "nextNodeId": "root" }
+        ]
+      },
+      "respectful": {
+        "text": "Ah, the virtuous traveler returns. How can I help you today?",
+        "choices": [
+          { "text": "I was wondering if you had any tasks.", "nextNodeId": "root" }
+        ]
+      },
+      "disrespectful": {
+        "text": "You again? I told you I have nothing to say to you.",
+        "choices": [
+          { "text": "Fine, I'm leaving.", "nextNodeId": "root" }
+        ]
+      }
+    },
     "questPrerequisiteLines": {
-      "iron_scraps": "I'm sorry, I only discuss village matters with those who have delivered my mail."
+      "iron_scraps": "I only give tasks to those who show respect for our traditions and have helped my friend."
     },
     "questStartLines": {
       "iron_scraps": "We need iron scraps to repair our tools. If you find any, please bring them to me."

@@ -5,6 +5,7 @@
     "giverNpcId": "npc_1",
     "targetNpcId": "npc_2",
     "objectiveType": "talk_to",
+    "requiredFlags": ["helped_test_npc"],
     "reward": {
       "gold": 50,
       "xp": 100,
@@ -43,6 +44,7 @@
     "requiredItemId": "iron_scrap",
     "requiredCount": 1,
     "prerequisiteQuestIds": ["missing_letter"],
+    "requiredFlags": ["elder_respect"],
     "reward": {
       "gold": 50,
       "xp": 150,
