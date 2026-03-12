@@ -6,19 +6,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "test:world-labels": "node test_world_labels.cjs || (npx ts-node test_world_labels.ts)"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@types/jsdom": "^28.0.0",
     "firebase": "^11.0.0",
-    "jsdom": "^28.1.0",
-    "three": "^0.169.0",
-    "ts-node": "^10.9.2"
+    "three": "^0.169.0"
   },
   "devDependencies": {
     "@types/three": "^0.183.1",
-    "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "typescript": "^5.6.0",
+    "vite": "^5.4.0"
   }
 }

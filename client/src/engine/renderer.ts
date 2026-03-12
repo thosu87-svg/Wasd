@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { showTooltip, hideTooltip, createWorldLabel, removeWorldLabel } from "../ui/hud.ts";
-import { getClosestInteractable } from "../utils/interaction.ts";
+import { showTooltip, hideTooltip, createWorldLabel, removeWorldLabel } from "../ui/hud";
+import { getClosestInteractable } from "../utils/interaction";
 
 function projectToScreen(x: number, y: number, z: number) {
   const vector = new THREE.Vector3(x, y, z);
@@ -51,18 +51,8 @@ export function showFloatingText(text: string, x: number, y: number) {
   }).onfinish = () => div.remove();
 }
 export function initRenderer(canvas: HTMLCanvasElement, myPlayerId: string) {
-  // allow running in node/jsdom test environment by providing a canvas stub
-  if (!canvas || typeof (canvas as any).addEventListener !== 'function') {
-    // dummy renderer that matches three.js interface used here
-    class DummyRenderer {
-      setSize(w: number, h: number) {}
-      render(scene: any, camera: any) {}
-    }
-    renderer = new DummyRenderer() as any;
-  } else {
-    renderer = new THREE.WebGLRenderer({ canvas });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  }
+  renderer = new THREE.WebGLRenderer({ canvas });
+  renderer.setSize(window.innerWidth, window.innerHeight);
 
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x222222);

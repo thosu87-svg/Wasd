@@ -151,27 +151,5 @@
       "gold": 75,
       "xp": 150
     }
-  },
-  {
-    "id": "help_test_npc",
-    "title": "Help the Test NPC",
-    "giverNpcId": "npc_1",
-    "objectives": [
-      { "type": "talk_to", "targetNpcId": "npc_1", "description": "Speak with the Test NPC" },
-      { "type": "collect", "targetNpcId": "npc_1", "requiredItemId": "iron_scrap", "requiredCount": 1, "description": "Gather an iron scrap from the Test NPC" },
-      { "type": "talk_to", "targetNpcId": "npc_1", "description": "Return to the Test NPC" }
-    ],
-    "reward": { "gold": 150, "xp": 300 }
-  },
-  {
-    "id": "wolf_report",
-    "title": "Wolf Report",
-    "giverNpcId": "npc_2",
-    "objectives": [
-      { "type": "talk_to", "targetNpcId": "npc_2", "description": "Report to the Outpost Guard" },
-      { "type": "combat", "targetId": "npc_wolf", "description": "Defeat the Dire Wolf" },
-      { "type": "talk_to", "targetNpcId": "npc_3", "description": "Inform the Village Elder" }
-    ],
-    "reward": { "gold": 250, "xp": 500 }
   }
 ]

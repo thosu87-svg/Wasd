@@ -1,4 +1,4 @@
-import { sendDialogueChoice } from "../networking/websocketClient.ts";
+import { sendDialogueChoice } from "../networking/websocketClient";
 
 export function renderHUD() {
   const hud = document.createElement("div");
@@ -73,24 +73,11 @@ export function updateHUD(data: { gold: number, xp: number, quests: any[], inven
   
   const questContainer = document.getElementById("hud-quests");
   if (questContainer && data.questStatus) {
-    questContainer.innerHTML = `<strong>Quests:</strong><br/>` + data.questStatus.map((q: any) => {
-      let html = `<div style="color: ${q.state === 'active' ? '#00ff00' : q.state === 'completed' ? '#aaa' : q.state === 'available' ? '#ffff00' : '#ff4444'}">
+    questContainer.innerHTML = `<strong>Quests:</strong><br/>` + data.questStatus.map((q: any) => 
+      `<div style="color: ${q.state === 'active' ? '#00ff00' : q.state === 'completed' ? '#aaa' : q.state === 'available' ? '#ffff00' : '#ff4444'}">
         ${q.title} [${q.state}]
-      </div>`;
-      if (q.steps) {
-        // display step list with current indicator
-        html += `<div style="margin-left: 10px; font-size:0.8em; color:#ccc;">`;
-        q.steps.forEach((step: any, idx: number) => {
-          const done = idx < q.currentStep || (q.state === 'completed' && idx < q.stepCount);
-          const indicator = done ? '✓' : (idx === q.currentStep && q.state==='active' ? '➤' : '•');
-          const desc = step.description || step.type;
-          html += `${indicator} ${desc}`;
-          if (idx < q.steps.length - 1) html += `<br/>`;
-        });
-        html += `</div>`;
-      }
-      return html;
-    }).join("");
+      </div>`
+    ).join("");
   }
 }
 
