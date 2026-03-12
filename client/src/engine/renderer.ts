@@ -181,9 +181,6 @@ export function updateWorldState(state: any, myPlayerId: string | null) {
     }
     target.set(npc.position.x, 2, npc.position.y);
     
-    // Update health bar (simple hack: scale the sphere)
-    const mesh = npcMeshes.get(npc.id);
-    
     // Position label
     const screenPos = projectToScreen(npc.position.x, 4, npc.position.y);
     const label = createWorldLabel(npc.id, npc.name, 'npc', npc.health / npc.maxHealth);
