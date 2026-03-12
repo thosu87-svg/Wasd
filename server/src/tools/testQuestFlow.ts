@@ -27,16 +27,19 @@ async function run() {
   const started = engine.startQuest(player, "help_test_npc");
   console.log("started:", started);
   console.log("player quests:", JSON.stringify(player.quests, null, 2));
+  displayStatus(player);
 
   log("-- simulate wrong event (combat dummy) --");
   let res = engine.handleObjectiveEvent(player, { type: "combat", targetId: "npc_dummy" });
   console.log("result:", res);
   console.log("state after wrong event:", JSON.stringify(player.quests, null, 2));
+  displayStatus(player);
 
   log("-- simulate talk_to npc_1 (step1) --");
   res = engine.handleObjectiveEvent(player, { type: "talk_to", npcId: "npc_1" });
   console.log("result:", res);
   console.log("state after step1:", JSON.stringify(player.quests, null, 2));
+  displayStatus(player);
 
   log("-- simulate adding item and collect (step2) --");
   player.inventory.push({ id: "iron_scrap" });
@@ -44,6 +47,7 @@ async function run() {
   console.log("result:", res);
   console.log("inventory now:", player.inventory);
   console.log("state after step2:", JSON.stringify(player.quests, null, 2));
+  displayStatus(player);
 
   log("-- persistence simulation --");
   const saved = JSON.parse(JSON.stringify(player));
@@ -53,6 +57,7 @@ async function run() {
   res = engine.handleObjectiveEvent(saved, { type: "talk_to", npcId: "npc_1" });
   console.log("result:", res);
   console.log("state after completion:", JSON.stringify(saved.quests, null, 2));
+  displayStatus(saved);
   console.log("player gold/xp:", saved.gold, saved.xp);
 }
 
