@@ -326,12 +326,6 @@ export class WorldTick {
             }
           }
         }
-      } else if (msg.type === "equip") {
-        this.inventorySystem.equipItem(player, msg.itemId);
-        this.saveAll();
-      } else if (msg.type === "unequip") {
-        this.inventorySystem.unequipItem(player, msg.slot);
-        this.saveAll();
       } else if (msg.type === "drop") {
         this.inventorySystem.removeItem(player, msg.itemId);
         this.saveAll();

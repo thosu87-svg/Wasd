@@ -39,10 +39,12 @@ export class NPCSystem {
     }
   }
 
-  createNPC(id: string, name: string, x: number, y: number) {
-    const def = this.npcDefinitions.get(id);
+  createNPC(typeId: string, name: string, x: number, y: number) {
+    const def = this.npcDefinitions.get(typeId);
+    const instanceId = `${typeId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const npc = {
-      id,
+      id: instanceId,
+      typeId,
       name: name || (def ? def.name : "Unknown NPC"),
       role: def ? def.role : "Citizen",
       position: { x, y, z: 0 },
@@ -53,11 +55,11 @@ export class NPCSystem {
       inventory: [],
       personality: this.personalityEngine.generateTraits(),
       memory: [],
-      dna: this.genealogyEngine.createLineage(id, "Unknown"),
+      dna: this.genealogyEngine.createLineage(typeId, "Unknown"),
       dialogueId: def ? def.dialogueId : null,
       questHooks: def ? def.questHooks : []
     };
-    this.npcs.set(id, npc);
+    this.npcs.set(instanceId, npc);
     return npc;
   }
 

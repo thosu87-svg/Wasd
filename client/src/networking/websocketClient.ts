@@ -176,9 +176,11 @@ export function connectSocket() {
     }
 
     if (e.key === "i" || e.key === "I") {
-      const myPlayer = latestState.players.find((p: any) => p.id === myPlayerId);
-      if (myPlayer) {
-        renderInventoryPanel(myPlayer, ws);
+      if (latestState && latestState.players) {
+        const myPlayer = latestState.players.find((p: any) => p.id === myPlayerId);
+        if (myPlayer) {
+          renderInventoryPanel(myPlayer, ws);
+        }
       }
       return;
     }
