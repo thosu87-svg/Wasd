@@ -46,6 +46,13 @@
     "description": "A massive claw from an Alpha wolf."
   },
   {
+    "id": 'object_chest',
+    "name": "Chest",
+    "type": "misc",
+    "rarity": "common",
+    "description": "A wooden chest."
+  },
+  {
     "id": "bone_fragment",
     "name": "Bone Fragment",
     "type": "misc",
