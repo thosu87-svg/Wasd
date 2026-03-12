@@ -11,6 +11,7 @@ import { WorldSystem } from "../modules/world/WorldSystem.js";
 import { PersistenceManager } from "./PersistenceManager.js";
 import { ItemRegistry } from "../modules/inventory/ItemRegistry.js";
 import { GLBRegistry } from "../modules/asset-registry/GLBRegistry.js";
+import { cache } from "./Cache.js";
 import fs from "fs";
 import path from "path";
 
@@ -51,18 +52,6 @@ export class WorldTick {
     this.persistence = new PersistenceManager();
     this.glbRegistry = new GLBRegistry();
 
-    // Load persisted data
-    const savedData = this.persistence.load();
-    for (const name in savedData) {
-      const player = savedData[name];
-      if (!player.id) player.id = name;
-      this.hydratePlayer(player);
-      this.playerSystem.setPlayer(name, player);
-    }
-
-    // Load Spawns
-    this.loadSpawns();
-
     // Create a dummy player in a distant chunk to prove multi-observer union
     const dummyPlayer = this.playerSystem.createPlayer("dummy_player", "Dummy Player");
     dummyPlayer.position.x = 500;
@@ -73,17 +62,17 @@ export class WorldTick {
       console.log(`Socket ${id} connected. Waiting for login...`);
     };
 
-    this.ws.onPlayerDisconnect = (id) => {
+    this.ws.onPlayerDisconnect = async (id) => {
       const charName = this.socketToPlayer.get(id);
       if (charName) {
         this.observerEngine.unregister(id);
         this.socketToPlayer.delete(id);
-        this.saveAll();
+        await this.saveAll();
         console.log(`Player ${charName} (Socket ${id}) disconnected.`);
       }
     };
 
-    this.ws.onPlayerMessage = (id, msg) => {
+    this.ws.onPlayerMessage = async (id, msg) => {
       if (msg.type === "login") {
         const charName = msg.name || `Guest_${id.substring(0, 4)}`;
         let player = this.playerSystem.getPlayer(charName);
@@ -165,7 +154,7 @@ export class WorldTick {
         const equipment = this.inventorySystem.equipItem(player, itemId);
         if (equipment) {
           this.ws.sendToPlayer(id, { type: "dialogue", source: "System", text: `Equipped item.` });
-          this.saveAll();
+          await this.saveAll();
         }
       } else if (msg.type === "unequip") {
         if (!checkCooldown(500)) return;
@@ -173,7 +162,7 @@ export class WorldTick {
         const equipment = this.inventorySystem.unequipItem(player, slot);
         if (equipment) {
           this.ws.sendToPlayer(id, { type: "dialogue", source: "System", text: `Unequipped ${slot}.` });
-          this.saveAll();
+          await this.saveAll();
         }
       } else if (msg.type === "attack") {
         if (!checkCooldown(800)) return;
@@ -271,7 +260,7 @@ export class WorldTick {
                     source: "System",
                     text: `Quest Started: ${quest.name}`
                   });
-                  this.saveAll();
+                  await this.saveAll();
                 }
               }
 
@@ -398,7 +387,21 @@ export class WorldTick {
     }
   }
 
-  saveAll() {
+  async init() {
+    // Load persisted data
+    const savedData = await this.persistence.load();
+    for (const name in savedData) {
+      const player = savedData[name];
+      if (!player.id) player.id = name;
+      this.hydratePlayer(player);
+      this.playerSystem.setPlayer(name, player);
+    }
+
+    // Load Spawns
+    this.loadSpawns();
+  }
+
+  async saveAll() {
     const allPlayers = this.playerSystem.getAllPlayers();
     const data: any = {};
     for (const p of allPlayers) {
@@ -409,7 +412,7 @@ export class WorldTick {
         data[p.id] = persistedPlayer;
       }
     }
-    this.persistence.save(data);
+    await this.persistence.save(data);
   }
 
   private hydratePlayer(player: any) {
@@ -495,6 +498,16 @@ export class WorldTick {
 
     // 2. Process active chunks
     const activeChunks = this.chunkSystem.getActiveChunks();
+
+    // Update Cache
+    if (cache) {
+      cache.set('world:stats', JSON.stringify({
+        onlinePlayers: this.playerSystem.getAllPlayers().length,
+        activeChunks: activeChunks.length,
+        tick: this.tickCount,
+        timestamp: Date.now()
+      }), 'EX', 10);
+    }
 
     // 3. Tick global systems
     const players = this.playerSystem.getAllPlayers();

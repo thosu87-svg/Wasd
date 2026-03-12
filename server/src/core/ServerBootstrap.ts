@@ -42,6 +42,7 @@ export class ServerBootstrap {
     ws.start();
 
     const tick = new WorldTick(ws);
+    await tick.init();
     const port = Number(process.env.PORT || 3000);
 
     httpServer.listen(port, () => {

@@ -38,8 +38,14 @@ export function sendDialogueChoice(npcId: string, nodeId: string, choiceId: stri
 let globalWs: WebSocket | null = null;
 
 export function connectSocket() {
+  const externalWsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL;
   const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const ws = new WebSocket(`${wsProtocol}//${location.host}/ws`);
+  const localWsUrl = `${wsProtocol}//${location.host}/ws`;
+  
+  const wsUrl = externalWsUrl || localWsUrl;
+  console.log(`Connecting to WebSocket: ${wsUrl}`);
+  
+  const ws = new WebSocket(wsUrl);
   globalWs = ws;
 
   // Update cooldowns UI every frame
