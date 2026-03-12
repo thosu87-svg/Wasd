@@ -5,6 +5,22 @@ function log(msg: string) { console.log(msg); }
 async function run() {
   const engine = new QuestEngine();
   console.log("loaded quests:", Array.from(engine.getQuestDefinitions().keys()));
+
+  function displayStatus(player: any) {
+    const status = engine.getQuestStatus(player);
+    console.log("HUD status:");
+    status.forEach((q: any) => {
+      console.log(` - ${q.title} [${q.state}]`);
+      if (q.steps) {
+        q.steps.forEach((step: any, idx: number) => {
+          const done = idx < q.currentStep || (q.state === 'completed' && idx < q.stepCount);
+          const indicator = done ? '✓' : (idx === q.currentStep && q.state === 'active' ? '➤' : '•');
+          const desc = step.description || step.type;
+          console.log(`   ${indicator} ${desc}`);
+        });
+      }
+    });
+  }
   const player: any = { inventory: [], quests: [], gold: 0, xp: 0 };
 
   log("Starting quest help_test_npc");

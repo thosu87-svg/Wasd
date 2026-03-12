@@ -83,7 +83,8 @@ export function updateHUD(data: { gold: number, xp: number, quests: any[], inven
         q.steps.forEach((step: any, idx: number) => {
           const done = idx < q.currentStep || (q.state === 'completed' && idx < q.stepCount);
           const indicator = done ? '✓' : (idx === q.currentStep && q.state==='active' ? '➤' : '•');
-          html += `${indicator} ${step.type}`;
+          const desc = step.description || step.type;
+          html += `${indicator} ${desc}`;
           if (idx < q.steps.length - 1) html += `<br/>`;
         });
         html += `</div>`;

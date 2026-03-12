@@ -136,7 +136,14 @@ export class QuestEngine {
       if (quest.objectives) {
         stepInfo.currentStep = currentStep;
         stepInfo.stepCount = stepCount;
-        stepInfo.steps = quest.objectives.map((o: any) => ({ ...o }));
+        stepInfo.steps = quest.objectives.map((o: any) => ({
+          type: o.type,
+          description: o.description,
+          targetNpcId: o.targetNpcId,
+          targetId: o.targetId,
+          requiredItemId: o.requiredItemId,
+          requiredCount: o.requiredCount
+        }));
       }
 
       status.push({
