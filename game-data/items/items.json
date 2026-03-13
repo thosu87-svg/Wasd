@@ -46,13 +46,6 @@
     "description": "A massive claw from an Alpha wolf."
   },
   {
-    "id": "object_chest",
-    "name": "Chest",
-    "type": "misc",
-    "rarity": "common",
-    "description": "A wooden chest."
-  },
-  {
     "id": "bone_fragment",
     "name": "Bone Fragment",
     "type": "misc",
@@ -102,12 +95,5 @@
     "type": "misc",
     "rarity": "uncommon",
     "description": "A token used by guards."
-  },
-  {
-    "id": "goblin_ear",
-    "name": "Goblin Ear",
-    "type": "misc",
-    "rarity": "common",
-    "description": "A smelly goblin ear. Proof of a hunt."
   }
 ]

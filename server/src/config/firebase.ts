@@ -1,32 +1,28 @@
-import { getApps, initializeApp, cert } from 'firebase-admin/app';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 
 let app;
-const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
 if (!getApps().length) {
-  if (serviceAccountKey) {
-    try {
-      const serviceAccount = JSON.parse(serviceAccountKey);
-      app = initializeApp({
-        credential: cert(serviceAccount)
-      });
-    } catch (error) {
-      console.warn('Failed to initialize Firebase Admin with key:', error);
-    }
+  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  
+  if (!serviceAccountKey) {
+    throw new Error("Missing required environment variable: FIREBASE_SERVICE_ACCOUNT_KEY");
   }
 
-  if (!app) {
-    console.warn("FIREBASE_SERVICE_ACCOUNT_KEY not set or invalid, using mock Firebase shell.");
+  try {
+    const serviceAccount = JSON.parse(serviceAccountKey);
+    app = initializeApp({
+      credential: cert(serviceAccount)
+    });
+  } catch (error) {
+    console.error('Error initializing Firebase Admin:', error);
+    throw error;
   }
 } else {
   app = getApps()[0];
 }
 
-export const db = app ? getFirestore(app) : ({
-  collection: () => ({ doc: () => ({ get: () => Promise.resolve({ exists: false, data: () => ({}) }), set: () => Promise.resolve() }) })
-} as any);
-export const auth = app ? getAuth(app) : ({
-  verifyIdToken: () => Promise.resolve({ uid: 'mock-uid' })
-} as any);
+export const db = getFirestore(app);
+export const auth = getAuth(app);

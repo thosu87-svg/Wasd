@@ -1,8 +1,7 @@
 node_modules/
 dist/
-build/
 .env
-*.log
+.env.local
 .DS_Store
-server/node_modules/
-server/dist/
+*.log
+coverage/

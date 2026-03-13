@@ -23,17 +23,11 @@ export function renderHUD() {
     <div id="hud-stats" style="font-size: 0.9em;">
       Gold: 0 | XP: 0
     </div>
-    <div id="hud-matrix" style="font-size: 0.8em; color: #00ffff;">
-      Matrix Energy: 0
-    </div>
     <div id="hud-inventory" style="font-size: 0.8em; color: #ffcc00;">
       Inv: Empty
     </div>
     <div id="hud-reputation" style="font-size: 0.8em; color: #ff99ff;">
       Rep: None
-    </div>
-    <div id="hud-brain" style="font-size: 0.8em; color: #ffffff; background: rgba(0,0,0,0.5); padding: 4px; border-radius: 4px;">
-      World State: Balanced
     </div>
     <div id="hud-equipment" style="font-size: 0.8em; color: #00ccff;">
       Equip: None
@@ -59,7 +53,7 @@ export function renderHUD() {
   };
 }
 
-export function updateHUD(data: { role?: string, gold: number, matrixEnergy?: number, xp: number, quests: any[], inventory: any[], equipment?: any, reputation?: any, questStatus?: any[] }) {
+export function updateHUD(data: { role?: string, gold: number, xp: number, quests: any[], inventory: any[], equipment?: any, reputation?: any, questStatus?: any[] }) {
   const btnAdmin = document.getElementById("btn-admin-assets");
   if (btnAdmin && data.role === "admin") {
     btnAdmin.style.display = "block";
@@ -68,10 +62,6 @@ export function updateHUD(data: { role?: string, gold: number, matrixEnergy?: nu
   const stats = document.getElementById("hud-stats");
   if (stats) {
     stats.textContent = `Gold: ${data.gold} | XP: ${data.xp}`;
-  }
-  const matrix = document.getElementById("hud-matrix");
-  if (matrix && data.matrixEnergy !== undefined) {
-    matrix.textContent = `Matrix Energy: ${data.matrixEnergy}`;
   }
 
   const inv = document.getElementById("hud-inventory");
@@ -338,24 +328,4 @@ export function renderInventoryPanel(player: any, ws: WebSocket) {
   (window as any).equip = (itemId: string) => ws.send(JSON.stringify({ type: 'equip', itemId }));
   (window as any).unequip = (slot: string) => ws.send(JSON.stringify({ type: 'unequip', slot }));
   (window as any).drop = (itemId: string) => ws.send(JSON.stringify({ type: 'drop', itemId }));
-}
-
-export function updateBrainHUD(state: any) {
-  const brainEl = document.getElementById("hud-brain");
-  if (brainEl) {
-    const anomalies = state.activeAnomalies.length > 0 ? `<br/><span style="color: #ff4444; font-size: 0.8em;">${state.activeAnomalies.join(", ")}</span>` : "";
-    brainEl.innerHTML = `World State: <strong>${state.summary}</strong> (${(state.centerValue * 100).toFixed(1)}%)${anomalies}`;
-
-    // Pulse effect if anomaly exists
-    if (state.activeAnomalies.length > 0) {
-      brainEl.style.border = "1px solid #ff4444";
-      brainEl.animate([
-        { background: "rgba(255,0,0,0.2)" },
-        { background: "rgba(0,0,0,0.5)" }
-      ], { duration: 1000, iterations: Infinity });
-    } else {
-      brainEl.style.border = "none";
-      brainEl.getAnimations().forEach(a => a.cancel());
-    }
-  }
 }

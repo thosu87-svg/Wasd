@@ -21,6 +21,14 @@ export class ServerBootstrap {
       });
     });
 
+    // Root health check for GCP Load Balancer
+    app.get("/", (req, res, next) => {
+      if (req.headers["user-agent"]?.includes("GoogleHC")) {
+        return res.status(200).send("OK");
+      }
+      next();
+    });
+
     // Serve client with Vite in development, or static files in production
     if (process.env.NODE_ENV !== "production") {
       try {

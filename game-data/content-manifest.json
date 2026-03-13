@@ -12,9 +12,7 @@
         "npc_wolf",
         "npc_6_hermit",
         "npc_7_merchant",
-        "npc_8_apprentice",
-        "npc_uschi",
-        "monster_goblin"
+        "npc_8_apprentice"
       ],
       "questIds": [
         "first_steps",
@@ -40,26 +38,13 @@
         "dialogue_dummy",
         "dialogue_npc_6",
         "dialogue_npc_7",
-        "dialogue_npc_8",
-        "dialogue_uschi",
-        "dialogue_goblin"
+        "dialogue_npc_8"
       ],
       "itemIds": [
         "starter_sword",
         "wooden_shield",
         "iron_scrap",
-        "wolf_pelt",
-        "fang",
-        "alpha_claw",
-        "object_chest",
-        "bone_fragment",
-        "rusted_blade",
-        "grave_ring",
-        "ancient_coin",
-        "relic_fragment",
-        "forgotten_sigil",
-        "guard_token",
-        "goblin_ear"
+        "wolf_pelt"
       ],
       "validationResult": "passed"
     }
