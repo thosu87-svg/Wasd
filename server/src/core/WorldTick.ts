@@ -448,8 +448,6 @@ export class WorldTick {
 
     this.chatSystem.systemMessage(`${charName} has entered the world.`);
     this.ws.broadcast({ type: "chat_message", sender: "System", channel: "system", text: `${charName} has entered the world.`, timestamp: Date.now() });
-
-    console.log(`Player ${charName} logged in on socket ${id}`);
   }
 
   private handleMoveStart(id: string, msg: any) {
