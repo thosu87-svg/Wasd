@@ -8,7 +8,7 @@ const __dirname = dirname(__filename);
 
 let firebaseApp: admin.app.App | null = null;
 let adminAuth: admin.auth.Auth | null = null;
-let adminDb: admin.firestore.Firestore | null = null;
+let adminDb: admin.database.Database | null = null;
 
 // Try to initialize Firebase Admin SDK with service account
 const serviceAccountPaths = [
@@ -23,11 +23,12 @@ for (const saPath of serviceAccountPaths) {
       const serviceAccount = JSON.parse(readFileSync(saPath, "utf-8"));
       firebaseApp = admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
-        projectId: serviceAccount.project_id,
+        databaseURL: "https://innate-summit-490115-p5-default-rtdb.europe-west1.firebasedatabase.app/"
       });
       adminAuth = admin.auth(firebaseApp);
-      adminDb = admin.firestore(firebaseApp);
-      console.log(`Firebase Admin SDK initialized (project: ${serviceAccount.project_id})`);
+      adminDb = admin.database(firebaseApp);
+      console.log(`✅ Firebase Admin SDK initialized (project: ${serviceAccount.project_id})`);
+      console.log(`🔗 Realtime Database connected: https://innate-summit-490115-p5-default-rtdb.europe-west1.firebasedatabase.app/`);
       break;
     } catch (err: any) {
       console.warn(`Firebase Admin: Failed to init from ${saPath}: ${err.message}`);
